@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
 import 'views/login_view.dart';
+import 'views/notes_view.dart';
 import 'views/register_view.dart';
+import 'dart:developer' as devtools show log;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +25,13 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       // home: const RegisterView(),
-      home: const HomePage(),
+      // home: const HomePage(),
+        home: const NotesView(),
+      routes: {
+        '/login/' : (context) => const LoginView(),
+        '/register/': (context) => const RegisterView(),
+        '/notes/': (context) => const NotesView()
+      }
     );
   }
 }
@@ -47,13 +55,13 @@ class HomePage extends StatelessWidget {
                 if (user == null) {
                   navToWidget(context, const LoginView());
                 } else if (user.emailVerified) {
-                  print('You are a verified user');
+                  devtools.log('You are a verified user');
                 } else {
                   navToWidget(context, const VerifyEmailView());
                 }
                 return const Text('Done');
               default:
-                return const Text('Loading...');
+                return const CircularProgressIndicator();
             }
           }),
     );
@@ -95,7 +103,7 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
                 if (user != null) {
                   await user.sendEmailVerification();
                 } else {
-                  print('User is null');
+                  devtools.log('User is null');
                 }
               },
               child: const Text('Send email verification'))

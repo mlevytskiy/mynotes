@@ -3,8 +3,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-
 import '../firebase_options.dart';
+import 'dart:developer' as devtools show log;
 
 class LoginView extends StatefulWidget {
   const LoginView({Key? key}) : super(key: key);
@@ -74,23 +74,27 @@ class _LoginViewState extends State<LoginView> {
                             email: email,
                             password: password
                         );
-                        print(userCredential);
+                        devtools.log(userCredential.toString());
                       } on FirebaseAuthException catch (e) {
                         if (e.code == 'user-not-found') {
-                          print("User not found");
+                          devtools.log("User not found");
                         } else {
-                          print("firebase auth exception happened ${e.code}");
+                          devtools.log("firebase auth exception happened ${e.code}");
                         }
                       } catch (e) {
-                        print("Something bad happened $e");
+                        devtools.log("Something bad happened $e");
                       }
                     },
-                        child: const Text('Login'))
+                        child: const Text('Login')),
+                    TextButton(onPressed: () async {
+
+                    },
+                        child: const Text('Not registered yet? Register here!')),
                   ],
                 ),
               );
             default:
-              return const Text('Loading...');
+              return const CircularProgressIndicator();
           }
         },
       ),
