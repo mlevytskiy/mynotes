@@ -8,6 +8,8 @@ import 'views/notes_view.dart';
 import 'views/register_view.dart';
 import 'dart:developer' as devtools show log;
 
+import 'views/verify_email_view.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
@@ -25,8 +27,8 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       // home: const RegisterView(),
-      // home: const HomePage(),
-        home: const NotesView(),
+      home: const HomePage(),
+      //   home: const NotesView(),
       routes: {
         '/login/' : (context) => const LoginView(),
         '/register/': (context) => const RegisterView(),
@@ -52,14 +54,15 @@ class HomePage extends StatelessWidget {
             switch (snapshot.connectionState) {
               case ConnectionState.done:
                 final user = FirebaseAuth.instance.currentUser;
+                devtools.log("user email verified=${user?.emailVerified}");
                 if (user == null) {
                   navToWidget(context, const LoginView());
                 } else if (user.emailVerified) {
-                  devtools.log('You are a verified user');
+                  navToWidget(context, const NotesView());
                 } else {
                   navToWidget(context, const VerifyEmailView());
                 }
-                return const Text('Done');
+                return const LoginView();
               default:
                 return const CircularProgressIndicator();
             }
@@ -79,34 +82,4 @@ void navToWidget(BuildContext context, StatefulWidget sfw) {
   nav(context, MaterialPageRoute(
     builder: (context) => sfw,
   ));
-}
-
-class VerifyEmailView extends StatefulWidget {
-  const VerifyEmailView({Key? key}) : super(key: key);
-
-  @override
-  State<VerifyEmailView> createState() => _VerifyEmailViewState();
-}
-
-class _VerifyEmailViewState extends State<VerifyEmailView> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text('Verify email'),
-        ),
-        body: Column(children: [
-          const Text('Please verify your email address:'),
-          TextButton(
-              onPressed: () async {
-                final user = FirebaseAuth.instance.currentUser;
-                if (user != null) {
-                  await user.sendEmailVerification();
-                } else {
-                  devtools.log('User is null');
-                }
-              },
-              child: const Text('Send email verification'))
-        ]));
-  }
 }
