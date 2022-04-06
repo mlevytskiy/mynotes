@@ -4,8 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import '../constants/routes.dart';
+import '../enums/menu_action.dart';
 import '../firebase_options.dart';
 import 'dart:developer' as devtools show log;
+
+import '../services/auth/auth_service.dart';
 
 class NotesView extends StatefulWidget {
   const NotesView({Key? key}) : super(key: key);
@@ -21,24 +24,29 @@ class _NotesViewState extends State<NotesView> {
       appBar: AppBar(
         title: const Text('Main UI'),
         actions: [
-          PopupMenuButton<String>(
-            onSelected: (str) async {
-              final shouldLogout = await showLogOutDialog(context);
-              devtools.log(shouldLogout.toString());
-              if (shouldLogout) {
-                await FirebaseAuth.instance.signOut();
-                Navigator.of(context).restorablePushNamedAndRemoveUntil(loginRoute, (route) => false);
+          PopupMenuButton<MenuAction>(
+            onSelected: (value) async {
+              switch (value) {
+                case MenuAction.logout:
+                  final shouldLogout = await showLogOutDialog(context);
+                  if (shouldLogout) {
+                    await AuthService.firebase().logOut();
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      loginRoute,
+                          (_) => false,
+                    );
+                  }
               }
             },
-            itemBuilder: (BuildContext context) {
-              return {'Log out'}.map((String choice) {
-                return PopupMenuItem<String>(
-                  value: choice,
-                  child: Text(choice),
-                );
-              }).toList();
+            itemBuilder: (context) {
+              return const [
+                PopupMenuItem<MenuAction>(
+                  value: MenuAction.logout,
+                  child: Text('Log out'),
+                ),
+              ];
             },
-          ),
+          )
         ]
       ),
     );
