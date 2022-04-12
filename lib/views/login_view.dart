@@ -5,7 +5,7 @@ import '../constants/routes.dart';
 import '../firebase_options.dart';
 import 'dart:developer' as devtools show log;
 
-import '../utilities/show_error_dialog.dart';
+import '../utilities/show_dialog.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({Key? key}) : super(key: key);
