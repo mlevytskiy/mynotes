@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:mynotes/extensions/list/filter.dart';
 import 'package:mynotes/services/crud/crud_exceptions.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
@@ -23,7 +24,7 @@ class NotesService {
   }
   factory NotesService() => _shared;
 
-  late final _notesStreamController;
+  late final StreamController<List<DatabaseNote>> _notesStreamController;
   //= StreamController<List<DatabaseNote>>.broadcast();
 
   Stream<List<DatabaseNote>> get allNotes =>
