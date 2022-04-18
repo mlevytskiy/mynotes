@@ -1,11 +1,12 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mynotes/services/auth/auth_exceptions.dart';
+import 'package:mynotes/services/auth/bloc/auth_state.dart';
+import 'package:mynotes/utilities/generics/post_frame_mixin.dart';
+
 import '../constants/routes.dart';
 import '../firebase_options.dart';
-import 'dart:developer' as devtools show log;
-
 import '../services/auth/bloc/auth_bloc.dart';
 import '../services/auth/bloc/auth_event.dart';
 import '../utilities/show_dialog.dart';
@@ -17,7 +18,7 @@ class LoginView extends StatefulWidget {
   State<LoginView> createState() => _LoginViewState();
 }
 
-class _LoginViewState extends State<LoginView> {
+class _LoginViewState extends State<LoginView> with PostFrameMixin {
   late final TextEditingController _email;
   late final TextEditingController _password;
 
@@ -26,6 +27,26 @@ class _LoginViewState extends State<LoginView> {
     _email = TextEditingController();
     _password = TextEditingController();
     super.initState();
+
+    final bloc = BlocProvider.of<AuthBloc>(context);
+
+    var state = bloc.state;
+    postFrame(() {
+      processAuthState(state);
+    });
+  }
+
+  void processAuthState(AuthState state) async {
+    print("listener state=$state");
+    if (state is AuthStateLoggedOut) {
+      if (state.exception is UserNotFoundAuthException) {
+        await showErrorDialog(context, 'User not found');
+      } else if (state.exception is WrongPasswordAuthException) {
+        await showErrorDialog(context, 'Wrong credentials');
+      } else if (state.exception is GenericAuthException) {
+        await showErrorDialog(context, 'Authentication error');
+      }
+    }
   }
 
   @override
@@ -66,31 +87,24 @@ class _LoginViewState extends State<LoginView> {
                       decoration: const InputDecoration(
                           hintText: 'Enter your password'),
                     ),
-                    TextButton(
-                        onPressed: () async {
-                          final email = _email.text;
-                          final password = _password.text;
-
-                          try {
-                            context.read<AuthBloc>().add(AuthEventLogIn(email, password));
-                          }
-
-                          on FirebaseAuthException catch (e) {
-                            if (e.code == 'user-not-found') {
-                              await showErrorDialog(context, "User not found");
-                            } else if (e.code == 'wrong-password') {
-                              await showErrorDialog(
-                                  context, "Wrong credentials");
-                            } else {
-                              await showErrorDialog(context,
-                                  "firebase auth exception happened ${e.code}");
-                            }
-                          } catch (e) {
-                            await showErrorDialog(
-                                context, "Something bad happened $e");
-                          }
-                        },
-                        child: const Text('Login')),
+                    BlocListener<AuthBloc, AuthState>(
+                      listenWhen: (previousState, currentState) {
+                        print("previousState=$previousState ");
+                        return true;
+                      },
+                      listener: (context, state) {
+                        processAuthState(state);
+                      },
+                      child: TextButton(
+                          onPressed: () async {
+                            final email = _email.text;
+                            final password = _password.text;
+                            context
+                                .read<AuthBloc>()
+                                .add(AuthEventLogIn(email, password));
+                          },
+                          child: const Text('Login')),
+                    ),
                     TextButton(
                         onPressed: () async {
                           Navigator.of(context)
