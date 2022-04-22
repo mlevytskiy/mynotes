@@ -56,6 +56,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             const AuthStateLoggedOut(
               exception: null,
               isLoading: false,
+              loadingText: 'Please wait while I log you in',
             ),
           );
           //fixme
