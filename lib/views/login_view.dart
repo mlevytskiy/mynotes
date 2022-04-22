@@ -5,7 +5,6 @@ import 'package:mynotes/services/auth/auth_exceptions.dart';
 import 'package:mynotes/services/auth/bloc/auth_state.dart';
 import 'package:mynotes/utilities/generics/post_frame_mixin.dart';
 
-import '../constants/routes.dart';
 import '../firebase_options.dart';
 import '../services/auth/bloc/auth_bloc.dart';
 import '../services/auth/bloc/auth_event.dart';
@@ -21,6 +20,7 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> with PostFrameMixin {
   late final TextEditingController _email;
   late final TextEditingController _password;
+  CloseDialog? _closeDialogHandler;
 
   @override
   void initState() {
@@ -37,8 +37,17 @@ class _LoginViewState extends State<LoginView> with PostFrameMixin {
   }
 
   void processAuthState(AuthState state) async {
-    print("listener state=$state");
     if (state is AuthStateLoggedOut) {
+      final closeDialog = _closeDialogHandler;
+
+      if (!state.isLoading && closeDialog != null) {
+        closeDialog();
+        _closeDialogHandler = null;
+      } else if (state.isLoading && closeDialog == null) {
+        _closeDialogHandler =
+            showLoadingDialog(context: context, text: "Loading...");
+      }
+
       if (state.exception is UserNotFoundAuthException) {
         await showErrorDialog(context, 'User not found');
       } else if (state.exception is WrongPasswordAuthException) {
@@ -58,68 +67,65 @@ class _LoginViewState extends State<LoginView> with PostFrameMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Login'),
-      ),
-      body: FutureBuilder(
-        future: Firebase.initializeApp(
-            options: DefaultFirebaseOptions.currentPlatform),
-        builder: (context, snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.done:
-              return Center(
-                child: Column(
-                  children: <Widget>[
-                    TextField(
-                      controller: _email,
-                      enableSuggestions: false,
-                      autocorrect: false,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration:
-                          const InputDecoration(hintText: 'Enter your email'),
-                    ),
-                    TextField(
-                      controller: _password,
-                      obscureText: true,
-                      enableSuggestions: false,
-                      autocorrect: false,
-                      decoration: const InputDecoration(
-                          hintText: 'Enter your password'),
-                    ),
-                    BlocListener<AuthBloc, AuthState>(
-                      listenWhen: (previousState, currentState) {
-                        print("previousState=$previousState ");
-                        return true;
-                      },
-                      listener: (context, state) {
-                        processAuthState(state);
-                      },
-                      child: TextButton(
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        processAuthState(state);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Login'),
+        ),
+        body: FutureBuilder(
+          future: Firebase.initializeApp(
+              options: DefaultFirebaseOptions.currentPlatform),
+          builder: (context, snapshot) {
+            switch (snapshot.connectionState) {
+              case ConnectionState.done:
+                return Center(
+                  child: Column(
+                    children: <Widget>[
+                      TextField(
+                        controller: _email,
+                        enableSuggestions: false,
+                        autocorrect: false,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration:
+                            const InputDecoration(hintText: 'Enter your email'),
+                      ),
+                      TextField(
+                        controller: _password,
+                        obscureText: true,
+                        enableSuggestions: false,
+                        autocorrect: false,
+                        decoration: const InputDecoration(
+                            hintText: 'Enter your password'),
+                      ),
+                      TextButton(
                           onPressed: () async {
-                            final email = _email.text;
-                            final password = _password.text;
+                            final email = _email.text.trim();
+                            print("email=[$email]");
+                            final password = _password.text.trim();
                             context
                                 .read<AuthBloc>()
                                 .add(AuthEventLogIn(email, password));
                           },
                           child: const Text('Login')),
-                    ),
-                    TextButton(
-                        onPressed: () async {
-                          Navigator.of(context)
-                              .restorablePushNamedAndRemoveUntil(
-                                  registerRoute, (route) => false);
-                        },
-                        child:
-                            const Text('Not registered yet? Register here!')),
-                  ],
-                ),
-              );
-            default:
-              return const CircularProgressIndicator();
-          }
-        },
+                      TextButton(
+                          onPressed: () async {
+                            context.read<AuthBloc>().add(
+                                  const AuthEventShouldRegister(),
+                                );
+                          },
+                          child:
+                              const Text('Not registered yet? Register here!')),
+                    ],
+                  ),
+                );
+              default:
+                return const CircularProgressIndicator();
+            }
+          },
+        ),
       ),
     );
   }

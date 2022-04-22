@@ -1,12 +1,13 @@
-import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth, FirebaseAuthException;
+import 'package:firebase_auth/firebase_auth.dart'
+    show FirebaseAuth, FirebaseAuthException;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:mynotes/services/auth/auth_user.dart';
+
 import '../../firebase_options.dart';
-import 'auth_provider.dart';
 import 'auth_exceptions.dart';
+import 'auth_provider.dart';
 
 class FirebaseAuthProvider implements AuthProvider {
-
   @override
   Future<AuthUser> createUser({
     required String email,
@@ -31,21 +32,21 @@ class FirebaseAuthProvider implements AuthProvider {
       } else if (e.code == 'invalid-email') {
         throw InvalidEmailAuthException();
       } else {
-        throw GenericAuthException();
+        throw GenericAuthException(e);
       }
     } catch (_) {
-      throw GenericAuthException();
+      throw GenericAuthException(null);
     }
   }
 
   @override
   AuthUser? get currentUser {
     final user = FirebaseAuth.instance.currentUser;
-        if (user != null) {
-          return AuthUser.fromFirebase(user);
-        } else {
-          return null;
-        }
+    if (user != null) {
+      return AuthUser.fromFirebase(user);
+    } else {
+      return null;
+    }
   }
 
   @override
@@ -70,10 +71,10 @@ class FirebaseAuthProvider implements AuthProvider {
       } else if (e.code == 'wrong-password') {
         throw WrongPasswordAuthException();
       } else {
-        throw GenericAuthException();
+        throw GenericAuthException(e);
       }
     } catch (_) {
-      throw GenericAuthException();
+      throw GenericAuthException(null);
     }
   }
 
@@ -99,7 +100,8 @@ class FirebaseAuthProvider implements AuthProvider {
 
   @override
   Future<void> initialize() async {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   }
-
 }

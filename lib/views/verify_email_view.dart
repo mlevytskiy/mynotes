@@ -1,11 +1,12 @@
-
+import 'dart:developer' as devtools show log;
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mynotes/services/auth/bloc/auth_event.dart';
+
 import '../constants/routes.dart';
-import '../firebase_options.dart';
-import 'dart:developer' as devtools show log;
+import '../services/auth/bloc/auth_bloc.dart';
 
 class VerifyEmailView extends StatefulWidget {
   const VerifyEmailView({Key? key}) : super(key: key);
@@ -20,46 +21,44 @@ class _VerifyEmailViewState extends State<VerifyEmailView> {
     return Scaffold(
         appBar: AppBar(
           title: const Text('Verify email'),
-            actions: [
-              PopupMenuButton<String>(
-                onSelected: (str) async {
-                  final shouldLogout = await showLogOutDialog(context);
-                  devtools.log(shouldLogout.toString());
-                  if (shouldLogout) {
-                    await FirebaseAuth.instance.signOut();
-                    Navigator.of(context).restorablePushNamedAndRemoveUntil(loginRoute, (route) => false);
-                  }
-                },
-                itemBuilder: (BuildContext context) {
-                  return {'Log out'}.map((String choice) {
-                    return PopupMenuItem<String>(
-                      value: choice,
-                      child: Text(choice),
-                    );
-                  }).toList();
-                },
-              ),
-            ],
-        ),
-        body: Column(children: [
-          const Text("We've sent you an email verification. Please open it to verify your account."),
-          const Text("If you haven't received a verification email yet, press the button below"),
-          TextButton(
-              onPressed: () async {
-                final user = FirebaseAuth.instance.currentUser;
-                if (user != null) {
-                  devtools.log('user.sendEmailVerification();');
-                  await user.sendEmailVerification();
-                } else {
-                  devtools.log('User is null');
+          actions: [
+            PopupMenuButton<String>(
+              onSelected: (str) async {
+                final shouldLogout = await showLogOutDialog(context);
+                devtools.log(shouldLogout.toString());
+                if (shouldLogout) {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.of(context).restorablePushNamedAndRemoveUntil(
+                      loginRoute, (route) => false);
                 }
               },
-              child: const Text('Send email verification'),
+              itemBuilder: (BuildContext context) {
+                return {'Log out'}.map((String choice) {
+                  return PopupMenuItem<String>(
+                    value: choice,
+                    child: Text(choice),
+                  );
+                }).toList();
+              },
+            ),
+          ],
+        ),
+        body: Column(children: [
+          const Text(
+              "We've sent you an email verification. Please open it to verify your account."),
+          const Text(
+              "If you haven't received a verification email yet, press the button below"),
+          TextButton(
+            onPressed: () {
+              context
+                  .read<AuthBloc>()
+                  .add(const AuthEventSendEmailVerification());
+            },
+            child: const Text('Send email verification'),
           ),
           TextButton(
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              Navigator.of(context).pushNamedAndRemoveUntil(registerRoute, (route) => false);
+            onPressed: () {
+              context.read<AuthBloc>().add(const AuthEventLogOut());
             },
             child: const Text('Restart'),
           )
@@ -75,12 +74,16 @@ Future<bool> showLogOutDialog(BuildContext context) {
         title: const Text('Sign out'),
         content: const Text('Are you sure you want to sign out?'),
         actions: [
-          TextButton(onPressed: () {
-            Navigator.of(context).pop(false);
-          }, child: const Text('Cancel')),
-          TextButton(onPressed: () {
-            Navigator.of(context).pop(true);
-          }, child: const Text('Log out')),
+          TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              child: const Text('Log out')),
         ],
       );
     },
