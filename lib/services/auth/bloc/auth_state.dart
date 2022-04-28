@@ -14,12 +14,18 @@ abstract class AuthState {
   });
 }
 
-// class AuthStateLoading extends AuthState {
-//   const AuthStateLoading();
-// }
-
 class AuthStateUninitialized extends AuthState {
   const AuthStateUninitialized({bool isLoading = false})
+      : super(isLoading: isLoading);
+}
+
+class AuthStateForgotPassword extends AuthState {
+  final Exception? exception;
+  final bool hasSentEmail;
+  const AuthStateForgotPassword(
+      {required this.exception,
+      required this.hasSentEmail,
+      bool isLoading = false})
       : super(isLoading: isLoading);
 }
 

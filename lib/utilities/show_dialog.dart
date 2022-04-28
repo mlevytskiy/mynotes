@@ -103,3 +103,15 @@ CloseDialog showLoadingDialog({
 
   return () => Navigator.of(context).pop();
 }
+
+Future<void> showPasswordResetSentDialog(BuildContext context) {
+  return showGenericDialog(
+    context: context,
+    title: 'Password reset',
+    content:
+        'We have now sent you a password reset link. Please checxk your email for more information.',
+    optionBuilder: () => {
+      'OK': null,
+    },
+  );
+}

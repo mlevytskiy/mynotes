@@ -102,6 +102,13 @@ class _LoginViewState extends State<LoginView> with PostFrameMixin {
                       TextButton(
                           onPressed: () async {
                             context.read<AuthBloc>().add(
+                                  const AuthEventForgotPassword(null),
+                                );
+                          },
+                          child: const Text('I forgot my password')),
+                      TextButton(
+                          onPressed: () async {
+                            context.read<AuthBloc>().add(
                                   const AuthEventShouldRegister(),
                                 );
                           },
